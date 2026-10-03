@@ -1,0 +1,371 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Splitwise — Split expenses, not friendships</title>
+  <meta name="description" content="Track shared expenses and settle debts effortlessly. Create groups, add expenses, and view balances in real time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <!-- AUTH PAGE -->
+  <div id="auth-page" class="page active">
+    <div class="auth-bg">
+      <div class="auth-blob blob1"></div>
+      <div class="auth-blob blob2"></div>
+      <div class="auth-blob blob3"></div>
+    </div>
+    <div class="auth-card glass">
+      <div class="auth-logo">
+        <span class="logo-icon">&#9889;</span>
+        <span class="logo-text">Splitwise</span>
+      </div>
+      <p class="auth-tagline">Split expenses, not friendships.</p>
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-login" onclick="switchAuthTab('login')">Log In</button>
+        <button class="tab-btn" id="tab-register" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+        <div class="field-group">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field-group">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+          <span class="btn-label">Log In</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+      <form id="register-form" class="auth-form hidden" onsubmit="handleRegister(event)">
+        <div class="field-group">
+          <label for="reg-name">Full Name</label>
+          <input id="reg-name" type="text" placeholder="John Doe" required />
+        </div>
+        <div class="field-group">
+          <label for="reg-email">Email</label>
+          <input id="reg-email" type="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field-group">
+          <label for="reg-password">Password <small>(min 8 chars)</small></label>
+          <input id="reg-password" type="password" placeholder="••••••••" required minlength="8" autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="register-btn">
+          <span class="btn-label">Create Account</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP PAGE -->
+  <div id="app-page" class="page hidden">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo-icon">&#9889;</span>
+        <span class="logo-text">Splitwise</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="nav-dashboard" onclick="showSection('dashboard')">
+          <span class="nav-icon">&#127968;</span> Dashboard
+        </button>
+        <button class="nav-item" id="nav-groups" onclick="showSection('groups')">
+          <span class="nav-icon">&#128101;</span> Groups
+        </button>
+        <button class="nav-item" id="nav-expenses" onclick="showSection('expenses')">
+          <span class="nav-icon">&#128176;</span> Expenses
+        </button>
+        <button class="nav-item" id="nav-balances" onclick="showSection('balances')">
+          <span class="nav-icon">&#9878;&#65039;</span> Balances
+        </button>
+        <button class="nav-item" id="nav-settle" onclick="showSection('settle')">
+          <span class="nav-icon">&#9989;</span> Settle Up
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar" id="sidebar-avatar">?</div>
+          <div class="user-info">
+            <span class="user-name" id="sidebar-name">User</span>
+            <span class="user-role">Member</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="handleLogout()" id="logout-btn">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <!-- Dashboard -->
+      <section id="section-dashboard" class="content-section active">
+        <div class="section-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p class="subtitle">Welcome back, <span id="dash-name">—</span>!</p>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card glass">
+            <div class="stat-icon">&#128101;</div>
+            <div class="stat-value" id="stat-groups">—</div>
+            <div class="stat-label">Your Groups</div>
+          </div>
+          <div class="stat-card glass">
+            <div class="stat-icon">&#128176;</div>
+            <div class="stat-value" id="stat-expenses">—</div>
+            <div class="stat-label">Total Expenses</div>
+          </div>
+          <div class="stat-card glass">
+            <div class="stat-icon">&#128272;</div>
+            <div class="stat-value" id="stat-user-id">—</div>
+            <div class="stat-label">Your User ID</div>
+          </div>
+        </div>
+        <div class="quick-actions glass">
+          <h2>Quick Actions</h2>
+          <div class="action-row">
+            <button class="btn btn-primary" onclick="openModal('modal-create-group')">+ New Group</button>
+            <button class="btn btn-secondary" onclick="openModal('modal-add-expense')">+ Add Expense</button>
+            <button class="btn btn-secondary" onclick="showSection('balances')">View Balances</button>
+            <button class="btn btn-secondary" onclick="showSection('settle')">Settle Up</button>
+          </div>
+        </div>
+        <div class="card glass" id="dash-recent-card">
+          <h2>Recent Expenses</h2>
+          <div id="dash-recent" class="list-container">
+            <p class="empty-state">No recent expenses yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Groups -->
+      <section id="section-groups" class="content-section">
+        <div class="section-header">
+          <div>
+            <h1>Groups</h1>
+            <p class="subtitle">Manage your expense groups</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-create-group')">+ New Group</button>
+        </div>
+        <div class="card glass">
+          <h2>Add Member to Group</h2>
+          <form class="inline-form" onsubmit="handleAddMember(event)" id="add-member-form">
+            <div class="field-group">
+              <label for="am-group-id">Group ID</label>
+              <input id="am-group-id" type="number" min="1" placeholder="e.g. 3" required />
+            </div>
+            <div class="field-group">
+              <label for="am-user-id">User ID to Add</label>
+              <input id="am-user-id" type="number" min="1" placeholder="e.g. 7" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Add Member</button>
+          </form>
+        </div>
+        <div class="card glass">
+          <h2>Created Groups <span class="badge" id="groups-count">0</span></h2>
+          <div id="groups-list" class="list-container">
+            <p class="empty-state">No groups created yet. Start by creating one!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Expenses -->
+      <section id="section-expenses" class="content-section">
+        <div class="section-header">
+          <div>
+            <h1>Expenses</h1>
+            <p class="subtitle">Track what was spent and by whom</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-add-expense')">+ Add Expense</button>
+        </div>
+        <div class="card glass">
+          <h2>View Group Expenses</h2>
+          <form class="inline-form" onsubmit="handleFetchExpenses(event)" id="fetch-expenses-form">
+            <div class="field-group">
+              <label for="fe-group-id">Group ID</label>
+              <input id="fe-group-id" type="number" min="1" placeholder="e.g. 3" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Fetch Expenses</button>
+          </form>
+        </div>
+        <div class="card glass">
+          <h2>Expenses <span id="expenses-group-label" class="badge-label"></span></h2>
+          <div id="expenses-list" class="list-container">
+            <p class="empty-state">Enter a group ID above to load expenses.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Balances -->
+      <section id="section-balances" class="content-section">
+        <div class="section-header">
+          <div>
+            <h1>Balances</h1>
+            <p class="subtitle">See who owes what in each group</p>
+          </div>
+        </div>
+        <div class="card glass">
+          <h2>Check Group Balances</h2>
+          <form class="inline-form" onsubmit="handleFetchBalances(event)" id="fetch-balances-form">
+            <div class="field-group">
+              <label for="fb-group-id">Group ID</label>
+              <input id="fb-group-id" type="number" min="1" placeholder="e.g. 3" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Fetch Balances</button>
+          </form>
+        </div>
+        <div class="card glass">
+          <h2>Net Balances <span id="balances-group-label" class="badge-label"></span></h2>
+          <div id="balances-list" class="list-container">
+            <p class="empty-state">Enter a group ID above to load balances.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settle Up -->
+      <section id="section-settle" class="content-section">
+        <div class="section-header">
+          <div>
+            <h1>Settle Up</h1>
+            <p class="subtitle">Record a payment to clear a debt</p>
+          </div>
+        </div>
+        <div class="card glass settle-card">
+          <form class="vertical-form" onsubmit="handleSettle(event)" id="settle-form">
+            <div class="field-row">
+              <div class="field-group">
+                <label for="st-group-id">Group ID</label>
+                <input id="st-group-id" type="number" min="1" placeholder="e.g. 3" required />
+              </div>
+              <div class="field-group">
+                <label for="st-amount">Amount (₹)</label>
+                <input id="st-amount" type="number" step="0.01" min="0.01" placeholder="e.g. 250.00" required />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label for="st-paid-by">Paid By (User ID)</label>
+                <input id="st-paid-by" type="number" min="1" placeholder="e.g. 2" required />
+              </div>
+              <div class="field-group">
+                <label for="st-paid-to">Paid To (User ID)</label>
+                <input id="st-paid-to" type="number" min="1" placeholder="e.g. 5" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-wide" id="settle-btn">
+              <span class="btn-label">Record Settlement</span>
+              <span class="btn-spinner hidden"></span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Create Group -->
+  <div id="modal-create-group" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-create-group')">
+    <div class="modal glass">
+      <div class="modal-header">
+        <h2>Create Group</h2>
+        <button class="modal-close" onclick="closeModal('modal-create-group')" aria-label="Close">&#10005;</button>
+      </div>
+      <form onsubmit="handleCreateGroup(event)" id="create-group-form">
+        <div class="field-group">
+          <label for="cg-name">Group Name</label>
+          <input id="cg-name" type="text" placeholder="e.g. Goa Trip" required />
+        </div>
+        <div class="field-group">
+          <label for="cg-creator">Your User ID (Creator)</label>
+          <input id="cg-creator" type="number" min="1" placeholder="e.g. 1" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="cg-btn">
+          <span class="btn-label">Create Group</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Expense -->
+  <div id="modal-add-expense" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-add-expense')">
+    <div class="modal glass">
+      <div class="modal-header">
+        <h2>Add Expense</h2>
+        <button class="modal-close" onclick="closeModal('modal-add-expense')" aria-label="Close">&#10005;</button>
+      </div>
+      <form onsubmit="handleAddExpense(event)" id="add-expense-form">
+        <div class="field-group">
+          <label for="ae-group-id">Group ID</label>
+          <input id="ae-group-id" type="number" min="1" placeholder="e.g. 3" required />
+        </div>
+        <div class="field-group">
+          <label for="ae-paid-by">Paid By (User ID)</label>
+          <input id="ae-paid-by" type="number" min="1" placeholder="e.g. 1" required />
+        </div>
+        <div class="field-group">
+          <label for="ae-amount">Amount (₹)</label>
+          <input id="ae-amount" type="number" step="0.01" min="0.01" placeholder="e.g. 1500.00" required />
+        </div>
+        <div class="field-group">
+          <label for="ae-desc">Description</label>
+          <input id="ae-desc" type="text" placeholder="e.g. Dinner at the rooftop" required />
+        </div>
+        <div class="field-group">
+          <label for="ae-split">Split Between (comma-separated User IDs)</label>
+          <input id="ae-split" type="text" placeholder="e.g. 1, 2, 3" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="ae-btn">
+          <span class="btn-label">Add Expense</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Expense -->
+  <div id="modal-edit-expense" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-edit-expense')">
+    <div class="modal glass">
+      <div class="modal-header">
+        <h2>Edit Expense</h2>
+        <button class="modal-close" onclick="closeModal('modal-edit-expense')" aria-label="Close">&#10005;</button>
+      </div>
+      <form onsubmit="handleEditExpense(event)" id="edit-expense-form">
+        <input type="hidden" id="ee-expense-id" />
+        <div class="field-group">
+          <label for="ee-paid-by">Paid By (User ID)</label>
+          <input id="ee-paid-by" type="number" min="1" required />
+        </div>
+        <div class="field-group">
+          <label for="ee-amount">Amount (₹)</label>
+          <input id="ee-amount" type="number" step="0.01" min="0.01" required />
+        </div>
+        <div class="field-group">
+          <label for="ee-desc">Description</label>
+          <input id="ee-desc" type="text" required />
+        </div>
+        <div class="field-group">
+          <label for="ee-split">Split Between (comma-separated User IDs)</label>
+          <input id="ee-split" type="text" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="ee-btn">
+          <span class="btn-label">Save Changes</span>
+          <span class="btn-spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
